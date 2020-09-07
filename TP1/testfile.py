@@ -3,7 +3,8 @@ from typing import List, Literal, Tuple
 import pandas as pd
 import re
 import nltk
-from nltk.stem.porter import *
+from nltk import tokenize
+from nltk.stem import PorterStemmer 
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
@@ -25,35 +26,45 @@ def read_data_all(path: str) -> Tuple[List[str], List[str], List[bool], List[Lit
     gender = data["op_gender"].tolist()
     return source, inputs, labels, gender
 
+def make_sentence(line):
+    return tokenize.sent_tokenize(line)
 
-def corpus_sentences_association(data):
-    
+
+def corpus_to_sentences(data):  
     #check data is not empty and lists inside data have the same length
     if (not data) or [len(element) for element in data if len(element) != len(data[0])]:
-        raise Exception("Sorry, no numbers below zero")
+        raise ValueError("Data is not valid.")
     vocabulary = {}
     for i, item in enumerate(data[1]):
         #if key is not in dict add it and map it empty list
         #and append value to list mapped to key
         val = vocabulary.setdefault(data[0][i], [])
-        sentences = item.split(".")
-        sentences_list = [sentence + "." for sentence in sentences if sentence != ""]
+        sentences = make_sentence(item)
         if val:
-            val.extend(sentences_list)
+            val.extend(sentences)
             vocabulary[data[0][i]] = val
         else:
-            vocabulary[data[0][i]] = sentences_list
+            vocabulary[data[0][i]] = sentences
     
     return vocabulary
-    #cre
+
+def process_dict_corpus(func, corpus_dict):
+    dict_corpus = {}
+    for corpus_name in corpus_dict.keys():
+        dict_corpus.setdefault(corpus_name, func(corpus_dict[corpus_name]))
+    return dict_corpus
 
 def write_to_csv(sentences, corpus_name):
     dt = pd.DataFrame(sentences, columns =['sentences'])
     dt.to_csv(corpus_name + '.csv')
 
-def corpus_to_csv(corpus_dict):
-    for corpus in corpus_dict.keys():
-        write_to_csv(corpus_dict[corpus], corpus)
+def dict_corpus_to_csv(corpus_dict, name=None):
+    if name is None:
+        for corpus_name in corpus_dict.keys():
+            write_to_csv(corpus_dict[corpus_name], corpus_name)
+    else:
+        for corpus_name in corpus_dict.keys():
+            write_to_csv(corpus_dict[corpus_name], corpus_name + name)
 
 def func_to_csv(func, corpus, corpus_name):
     result = func(corpus)
@@ -61,20 +72,24 @@ def func_to_csv(func, corpus, corpus_name):
 
 
 def normalise_corpus(corpus):
-    normalise_corpus = []
+    normalised_corpus = []
     for sentence in corpus:
-        transformed = re.sub(r'\b(?:not|never|no)\b[\w\s]+[^\w\s]', lambda match: re.sub(r'(\s+)(\w+)', r'\1\2_NEG', match.group(0)), sentence, flags=re.IGNORECASE)
-        normalise_corpus.append(transformed)
-    
-    return normalise_corpus
+        normalised = re.sub(r'\b(?:not|never|no)\b[\w\s]+[^\w\s]', lambda match: re.sub(r'(\s+)(\w+)', r'\1\2_NEG', match.group(0)), sentence, flags=re.IGNORECASE)
+        normalised_corpus.append(normalised)
+    return normalised_corpus
 
-def normalise_corpus_to_csv(corpus):
-    normalise_corpus(corpus)
+def normalise_dict_corpus(corpus_dict):
+    dict_corpus = {}
+    for corpus_name in corpus_dict.keys():
+        dict_corpus.setdefault(corpus_name, normalise_corpus(corpus_dict[corpus_name]))
+    return dict_corpus
+
+def normalise_corpus_to_csv(corpus, corpus_name):
+    result = normalise_corpus(corpus)
+    write_to_csv(result, corpus_name)
 
 def tokenize_sentence(sentence):
-    #return re.split(r'[\s]+[\t]*|[\s]*[\t]+', sentence)
     return nltk.word_tokenize(sentence.lower())
-    #return re.split(' \n| \t|\n |\t |\t|\n| ', sentence)
 
 def tokenize_corpus(corpus):
     results = []
@@ -88,20 +103,18 @@ def tokenize_corpus_to_csv(corpus, corpus_name):
     write_to_csv(result, corpus_name)
 
 
-
-
 def lemmatisation_sentence(wordList):
     lemmatizer = WordNetLemmatizer()
     word_tuples = nltk.pos_tag(wordList)
     results = []
     for word, tag in word_tuples:
-        if tag[0].lower() in []:
-            results.append(lemmatizer.lemmatize(word, wntag))
+        if tag[0].lower() in ['a', 'r', 'n', 'v']:
+            results.append(lemmatizer.lemmatize(word, tag[0].lower()))
         else:
             results.append(word)
     return results
 
-def lemma_corpus(corpus):
+def lemmatize_corpus(corpus):
     results = []
     for line in corpus:
         lemmas = lemmatisation_sentence(re.split(r'\s]', line))
@@ -109,7 +122,7 @@ def lemma_corpus(corpus):
     return results
 
 def lemma_corpus_to_csv(corpus, corpus_name):
-    result = lemma_corpus(corpus)
+    result = lemmatize_corpus(corpus)
     write_to_csv(result, corpus_name)
 
 
@@ -143,70 +156,23 @@ def remove_stopwords_corpus_to_csv(corpus, corpus_name):
     result = remove_stopwords_corpus(corpus)
     write_to_csv(result, corpus_name)
 
-
 def preprocess_corpus(input_file: str, output_file: str)-> None:
-    pass
+    train_data = read_data_all(os.path.join(data_path, "train.csv"))
+    dict_corpus = corpus_to_sentences(train_data)
+    dict_corpus_to_csv(dict_corpus, '_phrases')
 
+    normalised_dict_corpus = process_dict_corpus(normalise_corpus, dict_corpus)
+    dict_corpus_to_csv(normalised_dict_corpus, '_normalised')
 
+    #tokenized_dict_corpus = process_dict_corpus(tokenize_corpus, normalised_dict_corpus)
+    tokenized_dict_corpus = process_dict_corpus(tokenize_corpus, dict_corpus)
+    dict_corpus_to_csv(tokenized_dict_corpus, '_mots')
 
-#lemmatizer = WordNetLemmatizer() 
-#lemmatizer.lemmatize("rocks")
-#lemmatizer.lemmatize("rocks", pos="v")
+    lemmatized_dict_corpus = process_dict_corpus(lemmatize_corpus, tokenized_dict_corpus)
+    dict_corpus_to_csv(lemmatized_dict_corpus, '_lemmes')
 
-from nltk.stem.snowball import SnowballStemmer
-stemmer = SnowballStemmer("english")
-word1 = ["Visitors", "from", "all", "over", "the", "world", "fishes", "during", "the", "summer","."]
-[ stemmer.stem(w) for w in word1]
+    stemmed_dict_corpus = process_dict_corpus(stems_corpus, lemmatized_dict_corpus)
+    dict_corpus_to_csv(stemmed_dict_corpus, '_stems')
 
-from nltk.stem.porter import *
-stemmer = PorterStemmer()
-plurals = ['caresses', 'flies', 'dies', 'mules', 'denied',
-...            'died', 'agreed', 'owned', 'humbled', 'sized',
-...            'meeting', 'stating', 'siezing', 'itemization',
-...            'sensational', 'traditional', 'reference', 'colonizer',
-...            'plotted']
-singles = [stemmer.stem(plural) for plural in plurals]
-print(' '.join(singles))
-
-import re
-string = "It was never going to work, he thought. He did not play so well, so he had to practice some more. Not foobar !"
-transformed = re.sub(r'\b(?:not|never|no)\b[\w\s]+[^\w\s]', 
-       lambda match: re.sub(r'(\s+)(\w+)', r'\1\2_NEG', match.group(0)), 
-       string,
-       flags=re.IGNORECASE)
-print(transformed)
-
-
-
-
-""" import re
-string = "no one enjoys it."
-string = "It was never going to work, he thought. He did not play so well, so he had to practice some more. Not foobar !"
-transformed = re.sub(r'\b(?:not|never|no)\b[\w\s]+[^\w\s]', 
-       lambda match: re.sub(r'(\s+)(\w+)', r'_NEG\1\2', match.group(0)), 
-       string,
-       flags=re.IGNORECASE)
-print(transformed) """
-
-re.sub(r'\b(?:not|never|no)\b[\w\s]+[^\w\s]')
-
-train_data = read_data_all(os.path.join(data_path, "train.csv"))
-dict_corpus = corpus_sentences_association(train_data)
-
-train_data = read_data(os.path.join(data_path, "train.csv"))
-test_data = read_data(os.path.join(data_path, "test.csv"))
-
-
-train_data = ([text.lower() for text in train_data[0]], train_data[1], train_data[2])
-test_data = ([text.lower() for text in test_data[0]], test_data[1], train_data[2])
-
-
-""" def preprocess_corpus(input_file: str, output_file: str) -> None:
-    pass
-
-preprocess_corpus(
-    os.path.join(data_path, "train.csv"), os.path.join(output_path, "train_norm.csv")
-)
-preprocess_corpus(
-    os.path.join(data_path, "test.csv"), os.path.join(output_path, "test_norm.csv")
-) """
+    removed_stopwords_dict_corpus = process_dict_corpus(remove_stopwords_corpus, stemmed_dict_corpus)
+    dict_corpus_to_csv(removed_stopwords_dict_corpus, '_norm')
