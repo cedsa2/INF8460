@@ -2,6 +2,10 @@ import os
 from typing import List, Literal, Tuple
 import pandas as pd
 import re
+import nltk
+from nltk.stem.porter import *
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 data_path = "data"
 output_path = "output"
@@ -51,6 +55,10 @@ def corpus_to_csv(corpus_dict):
     for corpus in corpus_dict.keys():
         write_to_csv(corpus_dict[corpus], corpus)
 
+def func_to_csv(func, corpus, corpus_name):
+    result = func(corpus)
+    write_to_csv(result, corpus_name)
+
 
 def normalise_corpus(corpus):
     normalise_corpus = []
@@ -60,13 +68,90 @@ def normalise_corpus(corpus):
     
     return normalise_corpus
 
-def segment_sentence(sentence):
-    return re.split(r'[\s]+[\t]*|[\s]*[\t]+', sentence)
+def normalise_corpus_to_csv(corpus):
+    normalise_corpus(corpus)
+
+def tokenize_sentence(sentence):
+    #return re.split(r'[\s]+[\t]*|[\s]*[\t]+', sentence)
+    return nltk.word_tokenize(sentence.lower())
     #return re.split(' \n| \t|\n |\t |\t|\n| ', sentence)
 
-from nltk.stem import WordNetLemmatizer
-lemmatizer = WordNetLemmatizer() 
-lemmatizer.lemmatize("rocks")
+def tokenize_corpus(corpus):
+    results = []
+    for sentence in corpus:
+        tokens = tokenize_sentence(sentence)
+        results.append(" ".join(tokens))
+    return results
+
+def tokenize_corpus_to_csv(corpus, corpus_name):
+    result = tokenize_corpus(corpus)
+    write_to_csv(result, corpus_name)
+
+
+
+
+def lemmatisation_sentence(wordList):
+    lemmatizer = WordNetLemmatizer()
+    word_tuples = nltk.pos_tag(wordList)
+    results = []
+    for word, tag in word_tuples:
+        if tag[0].lower() in []:
+            results.append(lemmatizer.lemmatize(word, wntag))
+        else:
+            results.append(word)
+    return results
+
+def lemma_corpus(corpus):
+    results = []
+    for line in corpus:
+        lemmas = lemmatisation_sentence(re.split(r'\s]', line))
+        results.append(" ".join(lemmas))
+    return results
+
+def lemma_corpus_to_csv(corpus, corpus_name):
+    result = lemma_corpus(corpus)
+    write_to_csv(result, corpus_name)
+
+
+def stemming_line(wordList):
+    stemmer = PorterStemmer()
+    return [stemmer.stem(word) for word in wordList]
+
+def stems_corpus(corpus):
+    results = []
+    for line in corpus:
+        stems = stemming_line(line)
+        results.append(" ".join(stems))
+    return results
+
+def stems_corpus_to_csv(corpus, corpus_name):
+    result = stems_corpus(corpus)
+    write_to_csv(result, corpus_name)
+
+def remove_stopwords_wordList(wordList):
+    stop_words = set(stopwords.words('english'))
+    return [word for word in wordList if word not in stop_words]
+
+def remove_stopwords_corpus(corpus):
+    results = []
+    for line in corpus:
+        clean_line = remove_stopwords_wordList(line)
+        results.append(" ".join(clean_line))
+    return results
+
+def remove_stopwords_corpus_to_csv(corpus, corpus_name):
+    result = remove_stopwords_corpus(corpus)
+    write_to_csv(result, corpus_name)
+
+
+def preprocess_corpus(input_file: str, output_file: str)-> None:
+    pass
+
+
+
+#lemmatizer = WordNetLemmatizer() 
+#lemmatizer.lemmatize("rocks")
+#lemmatizer.lemmatize("rocks", pos="v")
 
 from nltk.stem.snowball import SnowballStemmer
 stemmer = SnowballStemmer("english")
