@@ -160,7 +160,7 @@ def remove_stopwords_corpus_to_csv(corpus, corpus_name):
     write_to_csv(result, corpus_name)
 
 def preprocess_corpus(input_file: str, output_file: str)-> None:
-    train_data = read_data_all(os.path.join(input_file, "train.csv"))
+    train_data = read_data_all(input_file)
     dict_corpus = corpus_to_sentences(train_data)
     dict_corpus_to_csv(dict_corpus, '_phrases')
 
@@ -181,4 +181,4 @@ def preprocess_corpus(input_file: str, output_file: str)-> None:
     dict_corpus_to_csv(removed_stopwords_dict_corpus, '_norm')
 
 
-preprocess_corpus(data_path, "test")
+preprocess_corpus(os.path.join(data_path, "train.csv"), "test")
