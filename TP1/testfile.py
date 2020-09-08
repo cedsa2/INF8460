@@ -3,6 +3,9 @@ from typing import List, Literal, Tuple
 import pandas as pd
 import re
 import nltk
+nltk.download('averaged_perceptron_tagger')
+nltk.download('wordnet')
+nltk.download('stopwords')
 from nltk import tokenize
 from nltk.stem import PorterStemmer 
 from nltk.corpus import stopwords
@@ -117,7 +120,7 @@ def lemmatisation_sentence(wordList):
 def lemmatize_corpus(corpus):
     results = []
     for line in corpus:
-        lemmas = lemmatisation_sentence(re.split(r'\s]', line))
+        lemmas = lemmatisation_sentence(re.split(r'\s', line))
         results.append(" ".join(lemmas))
     return results
 
@@ -126,14 +129,14 @@ def lemma_corpus_to_csv(corpus, corpus_name):
     write_to_csv(result, corpus_name)
 
 
-def stemming_line(wordList):
+def stemming_sentence(wordList):
     stemmer = PorterStemmer()
     return [stemmer.stem(word) for word in wordList]
 
 def stems_corpus(corpus):
     results = []
     for line in corpus:
-        stems = stemming_line(line)
+        stems = stemming_sentence(re.split(r'\s', line))
         results.append(" ".join(stems))
     return results
 
@@ -148,7 +151,7 @@ def remove_stopwords_wordList(wordList):
 def remove_stopwords_corpus(corpus):
     results = []
     for line in corpus:
-        clean_line = remove_stopwords_wordList(line)
+        clean_line = remove_stopwords_wordList(re.split(r'\s', line))
         results.append(" ".join(clean_line))
     return results
 
@@ -157,7 +160,7 @@ def remove_stopwords_corpus_to_csv(corpus, corpus_name):
     write_to_csv(result, corpus_name)
 
 def preprocess_corpus(input_file: str, output_file: str)-> None:
-    train_data = read_data_all(os.path.join(data_path, "train.csv"))
+    train_data = read_data_all(os.path.join(input_file, "train.csv"))
     dict_corpus = corpus_to_sentences(train_data)
     dict_corpus_to_csv(dict_corpus, '_phrases')
 
@@ -176,3 +179,6 @@ def preprocess_corpus(input_file: str, output_file: str)-> None:
 
     removed_stopwords_dict_corpus = process_dict_corpus(remove_stopwords_corpus, stemmed_dict_corpus)
     dict_corpus_to_csv(removed_stopwords_dict_corpus, '_norm')
+
+
+preprocess_corpus(data_path, "test")
