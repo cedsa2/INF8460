@@ -131,6 +131,10 @@ def remove_stopwords_doc(doc):
 
 
 def preprocess_corpus(input_file: str, output_file: str)-> None:
+    matches  = re.findall(r"\w+_norm.csv$", output_file)
+    if matches:
+        output_file = matches[0].split("_norm.csv")[0]
+    
     train_data = read_data(input_file)
     corpus = corpus_to_sentences(train_data)
     write_corpus_to_csv(corpus, output_file + '_phrases')
@@ -149,7 +153,7 @@ def preprocess_corpus(input_file: str, output_file: str)-> None:
     write_corpus_to_csv(stemmed_corpus, output_file + '_stems')
 
     removed_stopwords_corpus = process_list_corpus_tup(remove_stopwords_doc, stemmed_corpus)
-    write_corpus_to_csv(removed_stopwords_corpus, output_file)
+    write_corpus_to_csv(removed_stopwords_corpus, output_file + '_norm')
 
 
-preprocess_corpus(os.path.join(data_path, "train.csv"), "test")
+preprocess_corpus(os.path.join(data_path, "train.csv"), "test_norm.csv")
