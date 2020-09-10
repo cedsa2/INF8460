@@ -66,8 +66,6 @@ def normalise_doc(doc):
     return normalised_doc
 
 
-
-
 def tokenize_sentence(sentence):
     #return nltk.word_tokenize(sentence.lower())
     return regexp_tokenize(sentence.lower(), "[\w']+") 
