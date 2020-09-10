@@ -66,15 +66,6 @@ def normalise_doc(doc):
     return normalised_doc
 
 
-def normalise_corpus(corpus):
-    normalised_corpus = []
-    for doc in corpus:
-        result = (doc[0], normalise_doc(doc[1]), doc[2])
-        normalised_corpus.append(result)
-    return normalised_corpus
-
-
-
 
 
 def tokenize_sentence(sentence):
