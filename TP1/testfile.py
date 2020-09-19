@@ -177,10 +177,30 @@ def frequence_table_corpus(tokenized_corpus, N):
 
 def write_frequence_to_csv(tup_list):
     result = list(zip(*tup_list))
-    dict_result = {"word" : result[0], "frequence" : result[1] }
+    rang = range(1, len(result[1]))
+    dict_result = {"word" : result[0], "frequence" : result[1], "rang":  rang}
     dt = pd.DataFrame(dict_result)
     dt.to_csv('table_freq.csv')
 
+
+def combinations_maker(process_list):
+    tuple_list = []
+    for i, _ in enumerate(process_list):
+        if i == 2:
+            break
+        tuple_list.extend(list(combinations(process_list, i+1)))
+    return [item for item in tuple_list if item != (lemmatize_doc, stems_doc) and item !=  (stems_doc, lemmatize_doc)]
+
+
+def  combinations_process_corpus(process_list, tokenized_corpus):
+    result = []
+    comb_process_list = combinations_maker(process_list)
+    for comb in comb_process_list:
+        corpus = tokenized_corpus
+        for func in comb:
+            corpus = process_list_corpus_tup(func, corpus)
+        result.append((corpus, tuple(i.__name__ for i in comb)))
+    return result
 
 
 train_data = read_data(os.path.join(data_path, "train.csv"))
@@ -190,45 +210,11 @@ tokenized_corpus = process_list_corpus_tup(tokenize_doc, corpus)
 #dict_word = count_words_corpus(tokenized_corpus)
 #result = sorted(dict_word.items(), key=lambda x: x[1], reverse=True)
 
-result = frequence_table_corpus(tokenized_corpus, 10)
-write_frequence_to_csv(result)
+#result = frequence_table_corpus(tokenized_corpus, 10)
+#write_frequence_to_csv(result)
 #print(result)
-#process_list = [lemmatize_doc, stems_doc, remove_stopwords_doc]
-def combinations_maker(process_list):
-    tuple_list = []
-    for i, _ in enumerate(process_list):
-        tuple_list.extend(list(combinations(process_list, i+1)))
-    return tuple_list
-
-
 process_list = [lemmatize_doc, stems_doc, remove_stopwords_doc]
-tuple_list = []
-for i, _ in enumerate(process_list):
-    if i == 2:
-        break
-    tuple_list.extend(list(combinations(process_list, i+1)))
-print([item for item in tuple_list if not (lemmatize_doc, stems_doc) or not  (stems_doc, lemmatize_doc)])
-print(tuple_list)
+#process_list = ['lemmatize_doc', 'stems_doc', 'remove_stopwords_doc']
 
-
-
-def  combintions_process_corpus(com_process_list):
-    result = []
-    for comb in tuple_list:
-        corpus = tokenized_corpus
-        for func in comb:
-            corpus = process_list_corpus_tup(func, corpus)
-
-    result.append(corpus)
-
-result = []
-for comb in tuple_list:
-   #print(comb)
-    corpus = tokenized_corpus
-    for func in comb:
-        corpus = process_list_corpus_tup(func, corpus)
-    #print(corpus)
-    result.append(corpus)
-
-print(result)
-
+results = combinations_process_corpus(process_list, tokenized_corpus)
+print(results)
