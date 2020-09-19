@@ -10,7 +10,8 @@ from nltk import tokenize
 from nltk.stem import PorterStemmer 
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import regexp_tokenize 
+from nltk.tokenize import regexp_tokenize
+from itertools import combinations
 
 data_path = "data"
 output_path = "output"
@@ -145,4 +146,63 @@ def preprocess_corpus(input_file: str, output_file: str)-> None:
     write_corpus_to_csv(removed_stopwords_corpus, output_file + '_norm')
 
 
-preprocess_corpus(os.path.join(data_path, "train.csv"), "test_norm.csv")
+
+
+#preprocess_corpus(os.path.join(data_path, "train.csv"), "test_norm.csv")
+
+def count_words(doc, vocabulary_dict):
+    #vocabulary_dict = {}
+    for line in doc:
+        words_list = re.split(r'\s', line)
+        for word in words_list:
+            if word in vocabulary_dict:
+                vocabulary_dict[word] += 1
+            else:
+                vocabulary_dict.setdefault(word, 1)
+    return vocabulary_dict
+
+def count_words_corpus(corpus):
+    vocabulary_dict = {}
+    for doc in corpus:
+        vocabulary_dict = count_words(doc[1], vocabulary_dict) 
+    return vocabulary_dict
+
+
+def frequence_table_corpus(tokenized_corpus, N):
+    dict_word = count_words_corpus(tokenized_corpus)
+    result = sorted(dict_word.items(), key=lambda x: x[1], reverse=True)
+    if len(result) > N:
+        result = result[0:N-1]
+    return result
+
+def write_frequence_to_csv(tup_list):
+    result = list(zip(*tup_list))
+    dict_result = {"word" : result[0], "frequence" : result[1] }
+    dt = pd.DataFrame(dict_result)
+    dt.to_csv('table_freq.csv')
+
+
+
+train_data = read_data(os.path.join(data_path, "train.csv"))
+corpus = corpus_to_sentences(train_data)
+tokenized_corpus = process_list_corpus_tup(tokenize_doc, corpus)
+#corpus = tokenized_corpus
+#dict_word = count_words_corpus(tokenized_corpus)
+#result = sorted(dict_word.items(), key=lambda x: x[1], reverse=True)
+
+process_list = [lemmatize_doc, stems_doc, remove_stopwords_doc]
+tuple_list = []
+for i, _ in enumerate(process_list):
+    tuple_list.extend(list(combinations(process_list, i+1)))
+
+print(tuple_list)
+
+result = []
+for comb in tuple_list:
+    print(comb)
+    corpus = tokenized_corpus
+    for func in comb:
+        corpus = process_list_corpus_tup(tokenize_doc, corpus)
+    #print(corpus)
+    result.append(corpus)
+
