@@ -85,7 +85,13 @@ def lemmatisation_sentence(wordList):
     results = []
     for word, tag in word_tuples:
         if tag[0].lower() in ['a', 'r', 'n', 'v']:
-            results.append(lemmatizer.lemmatize(word, tag[0].lower()))
+            if '_NEG' in word:
+                word.replace('_NEG', '')
+                lemme = lemmatizer.lemmatize(word, tag[0].lower())
+                lemme = lemme + '_NEG'
+                results.append(lemme)
+            else:
+                results.append(lemmatizer.lemmatize(word, tag[0].lower()))
         else:
             results.append(word)
     return results
@@ -99,7 +105,16 @@ def lemmatize_doc(doc):
 
 def stemming_sentence(wordList):
     stemmer = PorterStemmer()
-    return [stemmer.stem(word) for word in wordList]
+    result = []
+    for word in wordList:
+        if '_NEG' in word:
+            word.replace('_NEG', '')
+            stem = stemmer.stem(word)
+            stem = stem + '_NEG'
+            result.append(stem)
+        else:
+            result.append(stemmer.stem(word))
+    return result
 
 def stems_doc(doc):
     results = []
@@ -192,7 +207,7 @@ def combinations_maker(process_list):
     return [item for item in tuple_list if item != (lemmatize_doc, stems_doc) and item !=  (stems_doc, lemmatize_doc)]
 
 
-def  combinations_process_corpus(process_list, tokenized_corpus):
+def combinations_process_corpus(process_list, tokenized_corpus):
     result = []
     comb_process_list = combinations_maker(process_list)
     for comb in comb_process_list:
