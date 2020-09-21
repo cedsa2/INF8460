@@ -201,10 +201,11 @@ def write_frequence_to_csv(tup_list):
 def combinations_maker(process_list):
     tuple_list = []
     for i, _ in enumerate(process_list):
-        if i == 2:
+        if i == 3:
             break
         tuple_list.extend(list(combinations(process_list, i+1)))
-    return [item for item in tuple_list if item != (lemmatize_doc, stems_doc) and item !=  (stems_doc, lemmatize_doc)]
+    return [item for item in tuple_list if not (lemmatize_doc in item and stems_doc in item)]
+    
 
 
 def combinations_process_corpus(process_list, tokenized_corpus):
@@ -212,7 +213,12 @@ def combinations_process_corpus(process_list, tokenized_corpus):
     comb_process_list = combinations_maker(process_list)
     for comb in comb_process_list:
         corpus = tokenized_corpus
+        if normalise_doc in comb:
+            corpus = process_list_corpus_tup(normalise_doc, corpus)
+        corpus = process_list_corpus_tup(tokenize_doc, corpus)
         for func in comb:
+            if func == normalise_doc:
+                continue
             corpus = process_list_corpus_tup(func, corpus)
         result.append((corpus, tuple(i.__name__ for i in comb)))
     return result
@@ -233,3 +239,13 @@ process_list = [lemmatize_doc, stems_doc, remove_stopwords_doc]
 
 results = combinations_process_corpus(process_list, tokenized_corpus)
 print(results)
+
+from itertools import combinations
+process_list = ['normalise_doc', 'lemmatize_doc', 'stems_doc', 'remove_stopwords_doc']
+tuple_list = []
+for i, _ in enumerate(process_list):
+    if i == 3:
+        break
+    tuple_list.extend(list(combinations(process_list, i+1)))
+print([item for item in tuple_list if item != ('lemmatize_doc', 'stems_doc') and item !=  ('stems_doc', 'lemmatize_doc')])
+print([item for item in tuple_list if not ('lemmatize_doc' in item and 'stems_doc' in item)])
