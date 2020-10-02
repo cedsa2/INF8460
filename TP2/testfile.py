@@ -1,11 +1,13 @@
 import math
 import numpy as np
 from collections import Counter
+import re
 #Ecrire une fonction qui retourne les +/- 5 voisins du mot en parametres
 
 x = ["vous", "ecrire", "une", "fonction", "qui", "retourne", "les", "voisins", "du", "mot"]
 
-def get_neigbours(list_words, index, N):
+
+def get_neigbours_old(list_words, index, N):
     result = []
     try:
         word = list_words[index]
@@ -18,35 +20,41 @@ def get_neigbours(list_words, index, N):
     if min_index < 0:
         min_index = 0
     while(min_index <= max_index):
-        if min_index != index:
+        if list_words[min_index] != word:
             result.append((word, list_words[min_index]))
         min_index += 1
     return result
 
-def get_neigbours_d(list_words, index, N):
-    result_dist = []
+def get_neighbours(list_words, index, N, is_distance):
+    result = []
     try:
         word = list_words[index]
     except:
-        return result_dist
+        return result
     max_index =  index + N
     if max_index >= len(list_words):
         max_index = len(list_words) - 1
     min_index = index - N
     if min_index < 0:
         min_index = 0
-    while(min_index <= max_index):
-        if min_index != index:
-            result_dist.append(((word, list_words[min_index]), 1 / (min_index - index)))
-        min_index += 1
-    return result_dist
+    if is_distance:
+        while(min_index <= max_index):
+            if list_words[min_index] != word:
+                result.append(((word, list_words[min_index]), 1 / (min_index - index)))
+            min_index += 1
+    else:
+        while(min_index <= max_index):
+            if list_words[min_index] != word:
+                result.append((word, list_words[min_index]))
+            min_index += 1
+    return result
 
 
-print(get_neigbours(x, 7, 5))
-print(get_neigbours_d(x, 7, 5))
+print(get_neighbours(x, 7, 5, True))
+#print(get_neigbours_d(x, 7, 5))
 
 
-def neighbours_grapper(list_words, word, N):
+def neighbours_grapper(list_words, word, N, is_distance):
     #if list_words is empty return
     if not list_words:
         return []
@@ -57,12 +65,40 @@ def neighbours_grapper(list_words, word, N):
         return []
     result = []
     for i in indexes:
-        result.append(get_neigbours(list_words, i, N))
-    #retourner le counter de chaque mot?
+        result.extend(get_neighbours(list_words, i, N, is_distance))
     return result
 
 
-def matrix_creator(tuple_list, unigramme_list, N):
+def neighbours_corpus(corpus, N, frame_panda, is_distance):
+    result = []
+    for word in frame_panda:
+        for sentence in corpus:
+            re.split(r'\s', sentence)
+            result.extend(neighbours_grapper(sentence, word, N, is_distance))
+    return result
+
+
+def dict_tuple_creator(tuple_list):
+    dict_tuple = Counter(tuple_list)
+    return dict(dict_tuple)
+
+test = [(('voisins', 'une'), -0.2), (('voisins', 'fonction'), -0.25), (('voisins', 'qui'), -0.3333333333333333), (('voisins', 'retourne'), -0.5), (('voisins', 'une'), -0.4)]
+#Que faire des distances negatives?
+
+def dict_tuple_creator_d(tuple_list):
+    res = list(zip(*tuple_list))
+    tup = list(res[0])
+    dict_tup = Counter(tup)
+    print(dict_tup)
+    for key in dict_tup.keys():
+        temp = [item[1] for item in tuple_list if item[0] == key]
+        total = sum(temp)
+        dict_tup[key] = total / dict_tup[key]
+    return dict(dict_tup)
+
+print(dict_tuple_creator_d(test))
+
+def matrix_creator(dict_tuple, unigramme_list, N):
     # avoir un dict avec key (mot1 , mot2) et frequence comme value
     # creer une matrice 5000 * 5000 et la remplir de zero
     # parcourir le dictionnaire:
@@ -71,7 +107,6 @@ def matrix_creator(tuple_list, unigramme_list, N):
     # mettre la value correspondante a cette key a (pos1, pos2) dans la matrice
     list_zero = [0] * N
     mat_result = [list_zero] * N
-    dict_tuple = Counter(tuple_list)
     for key in dict_tuple.keys():
         #if key[0] == key[1]:
         try:
@@ -89,8 +124,6 @@ def probability_matrix(mat_Result):
     arr = np.array(mat_Result)
     arr_prob = np.divide(arr, total)
     return arr_prob.tolist()
-
-
 
 def ppmi_pmi(mat_prob, is_ppmi):
     arr = np.array(mat_prob)
