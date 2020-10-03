@@ -163,9 +163,7 @@ mat_prob = [[0.0, 0.0, 0.05, 0.0, 0.05], [0, 0, 0.05, 0, 0.05], [0.11, 0.05, 0, 
 
 print(ppmi_pmi(mat_prob, False))
 
-#A FAIRE:
 
-# modifier  Squelette => 20 min
 
 # 2.A
 tuple_list = neighbours_corpus(corpus, 5, unigramme_list, False)
@@ -192,3 +190,7 @@ result_ppmi_sc_df = ppmi_pmi(df_d, True)
 result_ppmi_sc_df.to_csv('tp2_mat5_scaled_ppmi.csv')
 result_pmi_sc_df = ppmi_pmi(df_d, False)
 result_pmi_sc_df.to_csv('tp2_mat5_scaled_pmi.csv')
+
+#A FAIRE:
+
+# Tests => 20 min
