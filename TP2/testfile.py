@@ -3,6 +3,7 @@ import numpy as np
 from collections import Counter
 import re
 import pandas as pd
+import copy
 #Ecrire une fonction qui retourne les +/- 5 voisins du mot en parametres
 
 x = ["vous", "ecrire", "une", "fonction", "qui", "retourne", "les", "voisins", "du", "mot"]
@@ -41,7 +42,7 @@ def get_neighbours(list_words, index, N, is_distance):
     if is_distance:
         while(min_index <= max_index):
             if list_words[min_index] != word:
-                result.append(((word, list_words[min_index]), 1 / (min_index - index)))
+                result.append(((word, list_words[min_index]), 1 / abs(min_index - index)))
             min_index += 1
     else:
         while(min_index <= max_index):
@@ -51,7 +52,7 @@ def get_neighbours(list_words, index, N, is_distance):
     return result
 
 
-print(get_neighbours(x, 7, 5, True))
+#print(get_neighbours(x, 7, 5, True))
 #print(get_neigbours_d(x, 7, 5))
 
 
@@ -74,7 +75,7 @@ def neighbours_corpus(corpus, N, unigramme_list, is_distance):
     result = []
     for word in unigramme_list:
         for sentence in corpus:
-            re.split(r'\s', sentence)
+            sentence = re.split(r'\s', sentence)
             result.extend(neighbours_grapper(sentence, word, N, is_distance))
     return result
 
@@ -83,7 +84,7 @@ def dict_tuple_creator(tuple_list):
     dict_tuple = Counter(tuple_list)
     return dict(dict_tuple)
 
-test = [(('voisins', 'une'), -0.2), (('voisins', 'fonction'), -0.25), (('voisins', 'qui'), -0.3333333333333333), (('voisins', 'retourne'), -0.5), (('voisins', 'une'), -0.4)]
+#test = [(('voisins', 'une'), -0.2), (('voisins', 'fonction'), -0.25), (('voisins', 'qui'), -0.3333333333333333), (('voisins', 'retourne'), -0.5), (('voisins', 'une'), -0.4)]
 #Que faire des distances negatives?
 
 def dict_tuple_creator_d(tuple_list):
@@ -96,8 +97,6 @@ def dict_tuple_creator_d(tuple_list):
         dict_tup[key] = total / dict_tup[key]
     return dict(dict_tup)
 
-print(dict_tuple_creator_d(test))
-
 def matrix_creator(dict_tuple, unigramme_list):
     # avoir un dict avec key (mot1 , mot2) et frequence comme value
     # creer une matrice 5000 * 5000 et la remplir de zero
@@ -106,8 +105,12 @@ def matrix_creator(dict_tuple, unigramme_list):
     #                           pour avoir ces coordonnes (pos1, pos2) dans la matrice
     # mettre la value correspondante a cette key a (pos1, pos2) dans la matrice
     N = len(unigramme_list)
-    list_zero = [0] * N
-    mat_result = [list_zero] * N
+    mat_result = []
+    count = 0
+    while count < N :
+        mat_result.append([0] * N)
+        count+=1
+    
     for key in dict_tuple.keys():
         #if key[0] == key[1]:
         try:
@@ -124,7 +127,6 @@ def mat_list_to_df(mat_result, unigramme_list):
     t_arr = arr.T
     arr_list = t_arr.tolist()
     dict_result = {}
-    #dict_result["unigrammesMots"] = unigramme_list
     for i, word in enumerate(unigramme_list):
         dict_result[word] = arr_list[i]
     df = pd.DataFrame(data = dict_result, index = unigramme_list)
@@ -139,8 +141,6 @@ def probability_matrix(mat_Result):
     return arr_prob.tolist()
 
 def ppmi_pmi(df_Result, is_ppmi):
-    #col = df_Result.columns[0]
-    #temp_dict = df_Result.set_index(col).T.to_dict('list')
     temp = df_Result.to_numpy()
     mat_Result = list(temp.tolist())
     mat_prob = probability_matrix(mat_Result)
@@ -150,7 +150,7 @@ def ppmi_pmi(df_Result, is_ppmi):
     for i, line in enumerate(mat_prob):
         for j, item in enumerate(line):
             if item == 0:
-                mat_prob[i][j] = -100
+                mat_prob[i][j] = None
             elif is_ppmi:         
                 mat_prob[i][j] = max(math.log(item / (sum_arr_column[j]*sum_arr_line[i]), 2), 0)
             else:
@@ -161,19 +161,25 @@ def ppmi_pmi(df_Result, is_ppmi):
 
 mat_prob = [[0.0, 0.0, 0.05, 0.0, 0.05], [0, 0, 0.05, 0, 0.05], [0.11, 0.05, 0, 0.05, 0.0], [0.05, 0.32, 0, 0.21, 0]]
 
-print(ppmi_pmi(mat_prob, False))
+#print(ppmi_pmi(mat_prob, False))
 
 
-
+corpus = [ "I go to school every day by bus", "I go to theatre every night by bus"]
+unigramme_list = ["every", "go", "night", "school", "bus"]
 # 2.A
-tuple_list = neighbours_corpus(corpus, 5, unigramme_list, False)
+tuple_list = neighbours_corpus(corpus, 1, unigramme_list, False)
+print(tuple_list)
 dict_tuple = dict_tuple_creator(tuple_list)
+print(dict_tuple )
 mat_result = matrix_creator(dict_tuple, unigramme_list)
+print(mat_result)
 df = mat_list_to_df(mat_result, unigramme_list)
 df.to_csv('tp2_mat5.csv')
+result_ppmi_df = ppmi_pmi(df, True)
+result_ppmi_df.to_csv('tp2_mat5_ppmi.csv')
 
 # 2.B
-tuple_list_d = neighbours_corpus(corpus, 5, unigramme_list, True)
+tuple_list_d = neighbours_corpus(corpus, 1, unigramme_list, True)
 dict_tuple_d = dict_tuple_creator_d(tuple_list_d)
 mat_result_d = matrix_creator(dict_tuple_d, unigramme_list)
 df_d = mat_list_to_df(mat_result_d, unigramme_list)
