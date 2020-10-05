@@ -75,8 +75,7 @@ def neighbours_corpus(corpus, N, unigramme_list, is_distance):
     result = []
     for word in unigramme_list:
         for sentence in corpus:
-            sentence = re.split(r'\s', sentence)
-            result.extend(neighbours_grapper(sentence, word, N, is_distance))
+            result.extend(neighbours_grapper(re.split(r'\s', sentence), word, N, is_distance))
     return result
 
 
