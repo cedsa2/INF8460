@@ -163,10 +163,10 @@ mat_prob = [[0.0, 0.0, 0.05, 0.0, 0.05], [0, 0, 0.05, 0, 0.05], [0.11, 0.05, 0, 
 #print(ppmi_pmi(mat_prob, False))
 
 
-corpus = [ "I go to school every day by bus", "I go to theatre every night by bus"]
-unigramme_list = ["every", "go", "night", "school", "bus"]
+corpus = [ "I go to school every by day by bus", "I go to theatre every night by bus"]
+unigramme_list = ['theatre', 'by', 'school', 'day', 'bus']
 # 2.A
-tuple_list = neighbours_corpus(corpus, 1, unigramme_list, False)
+tuple_list = neighbours_corpus(corpus, 5, unigramme_list, False)
 print(tuple_list)
 dict_tuple = dict_tuple_creator(tuple_list)
 print(dict_tuple )
@@ -178,11 +178,11 @@ result_ppmi_df = ppmi_pmi(df, True)
 result_ppmi_df.to_csv('tp2_mat5_ppmi.csv')
 
 # 2.B
-tuple_list_d = neighbours_corpus(corpus, 1, unigramme_list, True)
+tuple_list_d = neighbours_corpus(corpus, 5, unigramme_list, True)
 dict_tuple_d = dict_tuple_creator_d(tuple_list_d)
 mat_result_d = matrix_creator(dict_tuple_d, unigramme_list)
 df_d = mat_list_to_df(mat_result_d, unigramme_list)
-df_d.to_csv('p2_mat5_scaled.csv')
+df_d.to_csv('tp2_mat5_scaled.csv')
 
 # 2.D
 result_ppmi_df = ppmi_pmi(df, True)
