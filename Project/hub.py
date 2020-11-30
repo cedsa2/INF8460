@@ -4,7 +4,6 @@ import data_handling
 from data_handling import read_questions
 from data_handling import read_data
 from data_handling import Preprocess
-from helper import voisins
 from typing import Dict, List, Tuple
 import sklearn
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
@@ -14,6 +13,8 @@ from scipy import spatial
 from sent2vec.vectorizer import Vectorizer
 from bert import getParagraph
 from bert import answer_question
+from scipy.spatial.distance import euclidean, cosine
+
 
 def load_data(name="corpus", force_refresh = 0)-> object:
     data_path = "data"
@@ -35,7 +36,7 @@ def load_data(name="corpus", force_refresh = 0)-> object:
     return result
 
 
-def load_data(data, force_refresh = 0)-> object:
+def prepoc_data(data, force_refresh = 0)-> object:
     pre = Preprocess()
 
     data_tokenized = pre.preprocess_pipeline(data)
@@ -48,7 +49,7 @@ def get_ranking_list(paragraphs_id, paragraphs_vectors, questions_id, questions_
 
     dic_paragraphs = {}
     for i, ids in enumerate(paragraphs_id) :
-        dic_paragraphs[paragraphs_ids[i]] = paragraphs_vectors[i]
+        dic_paragraphs[paragraphs_id[i]] = paragraphs_vectors[i]
 
 
     ranking_list = {}
@@ -63,7 +64,7 @@ def get_ranking_list(paragraphs_id, paragraphs_vectors, questions_id, questions_
 
 
 
-def get_emmbending(paragraph, question, representation_name)-> object:
+def get_emmbending(paragraph, question, representation_name):
     paragraphs_vectors = []
     questions_vectors = []
 
