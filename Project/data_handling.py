@@ -31,7 +31,7 @@ def read_questions(path: str) -> Tuple[List[int], List[str], List[int], List[str
         return ids, questions
 
 def save_to_csv(path: str, corpus):
-    df = pd.DataFrame(corpus, columns= list(corpus.keys())).head()
+    df = pd.DataFrame(corpus, columns= list(corpus.keys()))
     df.to_csv (os.path.join(output_path, path), index = False, header=True)
     
 class Preprocess(object):

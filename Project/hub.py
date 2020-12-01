@@ -30,6 +30,9 @@ def load_data(name="corpus", force_refresh = 0)-> object:
     elif name == "validation":
         result = read_questions(os.path.join(data_path, "/content/drive/My Drive/Colab Notebooks/INF8460/Project/data/val_ids.csv"))
 
+    elif name == "test":
+        result = read_questions(os.path.join(data_path, "/content/drive/My Drive/Colab Notebooks/INF8460/Project/data/test.csv"))
+
     else:
         print("error name")
     
@@ -69,7 +72,7 @@ def get_emmbending(paragraph, question, representation_name):
     questions_vectors = []
 
     if representation_name == "tfidf" :
-        vectorizer = TfidfVectorizer(max_features=15000) # 
+        vectorizer = TfidfVectorizer(max_features=10000) # 
         paragraphs_vectors = getTfIdfReprentation(paragraph, vectorizer)
         questions_vectors = vectorizer.transform(question).todense()
 
@@ -100,10 +103,10 @@ def get_emmbending(paragraph, question, representation_name):
     return paragraphs_vectors, questions_vectors
 
 
-def get_answers(model, tokenizer, paragraphs_id, paragraphs, questions_id, questions, ranking_list):
+def get_answers(nlp, paragraphs_id, paragraphs, questions_id, questions, ranking_list):
 
     questions_answers = {}
-    
+
     for question_id in ranking_list:
         question = questions[question_id]
         top_paragraphs_ids = ranking_list[question_id]
@@ -111,9 +114,10 @@ def get_answers(model, tokenizer, paragraphs_id, paragraphs, questions_id, quest
 
         questions_answers[question] = []
         for j, paragraph in enumerate(top_paragraphs_text):
-            answers = answer_question(model, tokenizer, question, paragraph)
+            answers = answer_question(nlp, question, paragraph)
             questions_answers[question].append( answers )
 
+        questions_answers[question] = sorted(questions_answers[question], key = lambda i: i['score'], reverse=True)
 
     print( question )
     print( questions_answers[question] )

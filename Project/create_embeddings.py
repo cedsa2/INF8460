@@ -33,7 +33,7 @@ def getTfIdfReprentation(data, vectorizer) -> object:
   data_tfidf = vectorizer.fit_transform(data)
   features = vectorizer.get_feature_names()
   dense = data_tfidf.todense()
-  return dense
+  return dense # data_tfidf
 
 
 def get_doc_embedded(X, vocab, embeddings) -> object:
